@@ -34,12 +34,12 @@ const sendVerifyMail = async (name, email, user_id) => {
       to: email,
       subject: "for verification mail",
       html:
-        "<p>Hi" +
+        "<h3>Hi" +
         " " +
         name +
         ', please click here to <a href=" http://localhost:8000/verify?id=' +
         user_id +
-        ' " > Verify </a> your mail </p>',
+        ' " > Verify </a> your mail </h3>',
     };
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
