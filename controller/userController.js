@@ -2,7 +2,7 @@ const User = require("../models/userModel");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
 
-// PASSWORD HASHING FUNCTION USING BCRYPT
+//* PASSWORD HASHING FUNCTION USING BCRYPT
 async function hashPassword(password) {
   return await bcrypt.hash(password, 10);
 }
@@ -11,7 +11,7 @@ async function validatePassword(plainPassword, hashedPassword) {
   return await bcrypt.compare(plainPassword, hashedPassword);
 }
 
-// for send mail
+//* for send mail
 
 const sendVerifyMail = async (name, email, user_id) => {
   try {
@@ -31,7 +31,8 @@ const sendVerifyMail = async (name, email, user_id) => {
       to: email,
       subject: "for verification mail",
       html:
-        "<p>Hi" +""+
+        "<p>Hi" +
+        " " +
         name +
         ', please click here to <a href=" http://localhost:8000/verify?id=' +
         user_id +
@@ -49,7 +50,7 @@ const sendVerifyMail = async (name, email, user_id) => {
   }
 };
 
-
+//* for register user
 
 const loadRegister = async (req, res) => {
   try {
@@ -87,31 +88,85 @@ const insertUser = async (req, res) => {
   } catch (error) {
     console.log(error.message);
   }
-}
+};
 
-const verifyMail = async (req,res)=>{
-    try {
+const verifyMail = async (req, res) => {
+  try {
+    const updateInfo = await User.updateOne(
+      { _id: req.query.id },
+      { $set: { is_varified: 1 } }
+    );
 
-    const updateInfo = await User.updateOne({_id:req.query.id},
-        {$set:{is_varified:1}}
-        )
+    console.log(updateInfo);
+    res.render("email-verified");
+  } catch (error) {
+    console.log(error.message);
+  }
+};
 
-        console.log(updateInfo)
-        res.render("email-verified")
+// * login user method started
 
-        
-    } catch (error) {
-        console.log(error.message);
-        
+const loginLoad = async (req, res) => {
+  try {
+    res.render("login");
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+const verifyLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const userData = await User.findOne({ email: email });
+
+    if (userData) {
+      const passwordMatch = await bcrypt.compare(password, userData.password);
+      if (passwordMatch) {
+        if (userData.is_varified === 0) {
+          res.render("login", { message: "Please verify your mail" });
+        } else {
+          // middleware auth.js (req.session.user_id)
+          req.session.user_id = userData._id;
+          res.redirect("/home");
+        }
+      } else {
+        res.render("login", { message: "email and password is incorrect" });
+      }
+    } else {
+      res.render("login", { message: "email and password is incorrect" });
     }
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+const loadHome = async (req, res) => {
+  try {
+    res.render("home");
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+const userLogout = async(req,res)=>{
+  try {
+
+    req.session.destroy()
+    res.redirect('/login')
+    
+  } catch (error) {
+    console.log(error.message);
+  }
 }
-
-
-
 
 
 module.exports = {
   loadRegister,
   insertUser,
-  verifyMail
-}
+  verifyMail,
+  loginLoad,
+  verifyLogin,
+  loadHome,
+  userLogout
+};
