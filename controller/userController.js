@@ -1,6 +1,9 @@
 const User = require("../models/userModel");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
+const config = require("../config/config")
+
+const randomstring = require("randomstring");
 
 //* PASSWORD HASHING FUNCTION USING BCRYPT
 async function hashPassword(password) {
@@ -11,7 +14,7 @@ async function validatePassword(plainPassword, hashedPassword) {
   return await bcrypt.compare(plainPassword, hashedPassword);
 }
 
-//* for send mail
+//* for send mail 
 
 const sendVerifyMail = async (name, email, user_id) => {
   try {
@@ -21,8 +24,8 @@ const sendVerifyMail = async (name, email, user_id) => {
       secure: false,
       requireTLS: true,
       auth: {
-        user: "mkaif.infograins@gmail.com",
-        pass: "mlzqbiqiuavudwnk",
+        user: config.emailUser,
+        pass:config.emailPassword,
       },
     });
 
@@ -49,6 +52,50 @@ const sendVerifyMail = async (name, email, user_id) => {
     console.log(error.message);
   }
 };
+
+
+// *for reset password send mail
+
+const sendResetPasswordMail = async (name, email, token) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      requireTLS: true,
+      auth: {
+        user: config.emailUser,
+        pass:config.emailPassword,
+      },
+    });
+
+    const mailOptions = {
+      from: config.emailUser,
+      to: email,
+      subject: "For Reset Password",
+      html:
+        "<p>Hi" +
+        " " +
+        name +
+        ', please click here to <a href=" http://localhost:8000/forget-password?token=' +
+        token +
+        ' " > Reset </a> your password </p>',
+    };
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log("Email has been sent--->", info.response);
+      }
+    });
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+
+
+
 
 //* for register user
 
@@ -149,16 +196,91 @@ const loadHome = async (req, res) => {
   }
 };
 
-const userLogout = async(req,res)=>{
+const userLogout = async (req, res) => {
   try {
-
-    req.session.destroy()
-    res.redirect('/login')
-    
+    req.session.destroy();
+    res.redirect("/login");
   } catch (error) {
     console.log(error.message);
   }
+};
+
+// * forget password code here
+
+const forgetLoad = async (req, res) => {
+  try {
+    res.render("forget");
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+const forgetVerify = async (req, res) => {
+  try {
+    const email = req.body.email;
+    const userData = await User.findOne({ email: email });
+    if (userData) {
+      if (userData.is_varified === 0) {
+        res.render("forget", { message: "Please verify your mail" });
+      } else {
+        const randomString = randomstring.generate();
+     const updatedData = await User.updateOne({ email: email},{$set:{ token:randomString }})
+     sendResetPasswordMail(userData.name,userData.email,randomString);
+     res.render("forget", { message: "Please check your mail to reset your password" });
+      }
+    } else {
+      res.render("forget", { message: "User email is incorrect." });
+    }
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+
+const forgetPasswordLoad = async(req,res)=>{
+  try {
+
+    const token = req.query.token;
+   const tokenData = await User.findOne({token:token});
+   if(tokenData){
+    res.render('forget-password',{user_id:tokenData._id})
+   }else{
+    res.render('404',{message:"Page not found"})
+   }
+
+    
+  } catch (error) {
+    console.log(error.message);
+    
+  }
 }
+
+
+
+const resetPassword=async (req,res)=>{
+  try {
+
+    const password = req.body.password;
+    const user_id = req.body.user_id;
+
+    const secure_password = await hashPassword(password)
+
+    const updatedData= await User.findByIdAndUpdate({_id:user_id},{$set:{password:secure_password,token:''}})
+
+    res.redirect('/')
+
+
+    
+  } catch (error) {
+    console.log(error.message);
+    
+  }
+}
+
+
+
+
+
 
 
 module.exports = {
@@ -168,5 +290,9 @@ module.exports = {
   loginLoad,
   verifyLogin,
   loadHome,
-  userLogout
+  userLogout,
+  forgetLoad,
+  forgetVerify,
+  forgetPasswordLoad,
+  resetPassword
 };

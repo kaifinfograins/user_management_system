@@ -1,28 +1,20 @@
 <% include("./partials/header.ejs")%>
 
-<h1>Login</h1>
+<h1>Forget </h1>
 
 <% if(typeof message !== 'undefined'){ %>
 
 <h5><%= message %></h5>
 <% } %>
 
-<form action="/login" method="post">
+<form action="/forget" method="post">
   <input type="email" name="email" placeholder="Enter email" required />
   <br /><br />
 
-  <input
-    type="password"
-    name="password"
-    placeholder="Enter password"
-    required
-  />
-  <br /><br />
-
-  <input type="submit" value="Login" />
+  <input type="submit" value="Send reset link" />
   <br /><br />
 </form>
 
-<a href="/forget">Forget Password</a>
+
 
 <% include("./partials/footer.ejs")%>

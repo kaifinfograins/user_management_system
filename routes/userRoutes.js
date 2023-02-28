@@ -54,6 +54,12 @@ user_routes.get("/verify",userController.verifyMail)
  user_routes.get('/home',auth.isLogin, userController.loadHome)
  user_routes.get('/logout',auth.isLogin, userController.userLogout)
 
+ user_routes.get('/forget',auth.isLogout, userController.forgetLoad)
+ user_routes.post('/forget',  userController.forgetVerify)
+ user_routes.get('/forget-password',auth.isLogout, userController.forgetPasswordLoad)
+ user_routes.post('/forget-password',  userController.resetPassword)
+
+
 
 
 
