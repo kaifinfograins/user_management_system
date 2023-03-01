@@ -60,6 +60,10 @@ user_routes.get("/verify",userController.verifyMail)
  user_routes.post('/forget-password',  userController.resetPassword)
 
 
+ user_routes.get('/verification',userController.verificationLoad)
+ user_routes.post('/verification', userController.sentVerificationLink)
+
+
 
 
 

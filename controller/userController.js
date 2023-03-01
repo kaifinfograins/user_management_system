@@ -1,7 +1,9 @@
 const User = require("../models/userModel");
 const bcrypt = require("bcrypt");
-const nodemailer = require("nodemailer");
-const config = require("../config/config")
+// const nodemailer = require("nodemailer");
+const config = require("../config/config");
+
+const sgMail = require("@sendgrid/mail");
 
 const randomstring = require("randomstring");
 
@@ -14,9 +16,9 @@ async function validatePassword(plainPassword, hashedPassword) {
   return await bcrypt.compare(plainPassword, hashedPassword);
 }
 
-//* for send mail 
+//====> for send mail <=====
 
-const sendVerifyMail = async (name, email, user_id) => {
+/*const sendVerifyMail = async (name, email, user_id) => {
   try {
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
@@ -25,7 +27,7 @@ const sendVerifyMail = async (name, email, user_id) => {
       requireTLS: true,
       auth: {
         user: config.emailUser,
-        pass:config.emailPassword,
+        pass: config.emailPassword,
       },
     });
 
@@ -53,8 +55,7 @@ const sendVerifyMail = async (name, email, user_id) => {
   }
 };
 
-
-// *for reset password send mail
+//=====> for reset password send mail <=======
 
 const sendResetPasswordMail = async (name, email, token) => {
   try {
@@ -65,7 +66,7 @@ const sendResetPasswordMail = async (name, email, token) => {
       requireTLS: true,
       auth: {
         user: config.emailUser,
-        pass:config.emailPassword,
+        pass: config.emailPassword,
       },
     });
 
@@ -93,11 +94,61 @@ const sendResetPasswordMail = async (name, email, token) => {
   }
 };
 
+*/
 
+// *for reset password send mail
+const sendResetPasswordMail = async (name, email, token) => {
+  sgMail.setApiKey(process.env.API_KEY);
+  const text = {
+    to: email,
+    from: "kaifmansuri1398@gmail.com",
+    subject: "Hello from send grid",
+    html:
+      "<p>Hi" +
+      " " +
+      name +
+      ', please click here to <a href=" http://localhost:8000/forget-password?token=' +
+      token +
+      ' " > Reset </a> your password </p>',
+  };
+  console.log("text.........", text);
+  try {
+    sgMail
+      .send(text)
+      .then((response) => console.log("Email sent ..........", response))
+      .catch((error) => console.log("error...........", error.text));
+  } catch (error) {
+    console.log(error, 76);
+  }
+};
 
+//* for send mail
+const sendVerifyMail = async (name, email, user_id) => {
+  sgMail.setApiKey(process.env.API_KEY);
+  const text = {
+    to: email,
+    from: "kaifmansuri1398@gmail.com",
+    subject: "Hello from send grid",
+    html:
+      "<h3>Hi" +
+      " " +
+      name +
+      ', please click here to <a href=" http://localhost:8000/verify?id=' +
+      user_id +
+      ' " > Verify </a> your mail </h3>',
+  };
+  console.log("text.........", text);
+  try {
+    sgMail
+      .send(text)
+      .then((response) => console.log("Email sent ..........", response))
+      .catch((error) => console.log("error...........", error.text));
+  } catch (error) {
+    console.log(error, 76);
+  }
+};
 
-
-//* for register user
+//*  register user
 
 const loadRegister = async (req, res) => {
   try {
@@ -120,18 +171,44 @@ const insertUser = async (req, res) => {
       password: hashedPassword,
       is_admin: 0,
     });
-    const userData = await user.save();
 
-    if (userData) {
-      sendVerifyMail(req.body.name, req.body.email, userData._id);
-      res.render("registration", {
-        message: "your registration has been successfully submitted",
-      });
-    } else {
-      res.render("registration", {
-        message: "your registration has been failed",
-      });
+    const user_id = user._id;
+
+    sgMail.setApiKey(process.env.API_KEY);
+    const text = {
+      to: email,
+      from: "kaifmansuri1398@gmail.com",
+      subject: "Hello from send grid",
+      html:
+        "<h3>Hi" +
+        " " +
+        name +
+        ', please click here to <a href=" http://localhost:8000/verify?id=' +
+        user_id +
+        ' " > Verify </a> your mail </h3>',
+    };
+    console.log("text.........", text);
+    try {
+      sgMail
+        .send(text)
+        .then((response) => console.log("Email sent ..........", response))
+        .catch((error) => console.log("error...........", error.text));
+      const userData = await user.save();
+      console.log("user===>", userData);
+      if (userData) {
+        res.render("registration", {
+          message:
+            "your registration has been successfully submitted,please check your mail",
+        });
+      } else {
+        res.render("registration", {
+          message: "your registration has been failed",
+        });
+      }
+    } catch (error) {
+      console.log(error, 76);
     }
+    // sgMail.send(text)
   } catch (error) {
     console.log(error.message);
   }
@@ -224,9 +301,14 @@ const forgetVerify = async (req, res) => {
         res.render("forget", { message: "Please verify your mail" });
       } else {
         const randomString = randomstring.generate();
-     const updatedData = await User.updateOne({ email: email},{$set:{ token:randomString }})
-     sendResetPasswordMail(userData.name,userData.email,randomString);
-     res.render("forget", { message: "Please check your mail to reset your password" });
+        const updatedData = await User.updateOne(
+          { email: email },
+          { $set: { token: randomString } }
+        );
+        sendResetPasswordMail(userData.name, userData.email, randomString);
+        res.render("forget", {
+          message: "Please check your mail to reset your password",
+        });
       }
     } else {
       res.render("forget", { message: "User email is incorrect." });
@@ -236,52 +318,65 @@ const forgetVerify = async (req, res) => {
   }
 };
 
-
-const forgetPasswordLoad = async(req,res)=>{
+const forgetPasswordLoad = async (req, res) => {
   try {
-
     const token = req.query.token;
-   const tokenData = await User.findOne({token:token});
-   if(tokenData){
-    res.render('forget-password',{user_id:tokenData._id})
-   }else{
-    res.render('404',{message:"Page not found"})
-   }
-
-    
+    const tokenData = await User.findOne({ token: token });
+    if (tokenData) {
+      res.render("forget-password", { user_id: tokenData._id });
+    } else {
+      res.render("404", { message: "Page not found" });
+    }
   } catch (error) {
     console.log(error.message);
-    
   }
-}
+};
 
-
-
-const resetPassword=async (req,res)=>{
+const resetPassword = async (req, res) => {
   try {
-
     const password = req.body.password;
     const user_id = req.body.user_id;
 
-    const secure_password = await hashPassword(password)
+    const secure_password = await hashPassword(password);
 
-    const updatedData= await User.findByIdAndUpdate({_id:user_id},{$set:{password:secure_password,token:''}})
+    const updatedData = await User.findByIdAndUpdate(
+      { _id: user_id },
+      { $set: { password: secure_password, token: "" } }
+    );
 
-    res.redirect('/')
-
-
-    
+    res.redirect("/");
   } catch (error) {
     console.log(error.message);
-    
   }
-}
+};
 
+//* for verification send mail link
 
+const verificationLoad = async (req, res) => {
+  try {
+    res.render("verification");
+  } catch (error) {
+    console.log(error.message);
+  }
+};
 
+const sentVerificationLink = async (req, res) => {
+  try {
+    const email = req.body.email;
+    const userData = await User.findOne({ email: email });
 
-
-
+    if (userData) {
+      sendVerifyMail(userData.name, userData.email, userData._id);
+      res.render("verification", {
+        message: "Reset verification mail sent on your email, please check",
+      });
+    } else {
+      res.render("verification", { message: "This email is not exists" });
+    }
+  } catch (error) {
+    console.log(error.message);
+  }
+};
 
 module.exports = {
   loadRegister,
@@ -294,5 +389,7 @@ module.exports = {
   forgetLoad,
   forgetVerify,
   forgetPasswordLoad,
-  resetPassword
+  resetPassword,
+  verificationLoad,
+  sentVerificationLink,
 };

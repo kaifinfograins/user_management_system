@@ -1,0 +1,20 @@
+<% include("./partials/header.ejs")%>
+
+<h1>Verify your mail </h1>
+
+<% if(typeof message !== 'undefined'){ %>
+
+<h5><%= message %></h5>
+<% } %>
+
+<form action=" " method="post">
+  <input type="email" name="email" placeholder="Enter email" required />
+  <br /><br />
+
+  <input type="submit" value="Send verification link" />
+  <br /><br />
+</form>
+
+
+
+<% include("./partials/footer.ejs")%>
