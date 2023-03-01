@@ -104,12 +104,12 @@ const sendResetPasswordMail = async (name, email, token) => {
     from: "kaifmansuri1398@gmail.com",
     subject: "Hello from send grid",
     html:
-      "<p>Hi" +
+      "<h3>Hi" +
       " " +
       name +
       ', please click here to <a href=" http://localhost:8000/forget-password?token=' +
       token +
-      ' " > Reset </a> your password </p>',
+      ' " > Reset </a> your password </h3>',
   };
   console.log("text.........", text);
   try {
@@ -128,7 +128,7 @@ const sendVerifyMail = async (name, email, user_id) => {
   const text = {
     to: email,
     from: "kaifmansuri1398@gmail.com",
-    subject: "Hello from send grid",
+    subject: "Hello from Admin side",
     html:
       "<h3>Hi" +
       " " +
