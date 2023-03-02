@@ -101,8 +101,8 @@ const sendResetPasswordMail = async (name, email, token) => {
   sgMail.setApiKey(process.env.API_KEY);
   const text = {
     to: email,
-    from: "kaifmansuri1398@gmail.com",
-    subject: "Hello from send grid",
+    from: config.emailUser,
+    subject: "Hello from Admin side",
     html:
       "<h3>Hi" +
       " " +
@@ -127,7 +127,7 @@ const sendVerifyMail = async (name, email, user_id) => {
   sgMail.setApiKey(process.env.API_KEY);
   const text = {
     to: email,
-    from: "kaifmansuri1398@gmail.com",
+    from: config.emailUser,
     subject: "Hello from Admin side",
     html:
       "<h3>Hi" +
@@ -177,8 +177,8 @@ const insertUser = async (req, res) => {
     sgMail.setApiKey(process.env.API_KEY);
     const text = {
       to: email,
-      from: "kaifmansuri1398@gmail.com",
-      subject: "Hello from send grid",
+      from: config.emailUser,
+      subject: "Hello from Kaif",
       html:
         "<h3>Hi" +
         " " +
@@ -267,7 +267,12 @@ const verifyLogin = async (req, res) => {
 
 const loadHome = async (req, res) => {
   try {
-    res.render("home");
+
+     
+   const userData =   await User.findById({_id:req.session.user_id})
+
+     res.render("home",{user:userData});
+    // res.status(200).json({status:200,data:userData})
   } catch (error) {
     console.log(error.message);
   }
@@ -378,6 +383,27 @@ const sentVerificationLink = async (req, res) => {
   }
 };
 
+
+//* user profile edit & update
+
+const editProfile = async(req,res)=>{
+  try {
+    const id = req.query.id;
+  const userData =await  User.findById({_id:id},)
+   
+  if(userData){
+     res.render('edit',{user:userData})
+  }else{
+    res.redirect('/home')
+  }
+  
+
+  } catch (error) {
+    console.log(error.message);
+    
+  }
+}
+
 module.exports = {
   loadRegister,
   insertUser,
@@ -392,4 +418,5 @@ module.exports = {
   resetPassword,
   verificationLoad,
   sentVerificationLink,
+  editProfile
 };

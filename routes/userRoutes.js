@@ -20,6 +20,9 @@ user_routes.use(bodyParser.urlencoded({ extended: true }));
 const multer = require("multer");
 const path = require("path");
 
+// for serving files
+user_routes.use(express.static('public'))
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, path.join(__dirname, "../public/userImages"));
@@ -52,20 +55,20 @@ user_routes.get("/verify",userController.verifyMail)
  user_routes.post('/login',userController.verifyLogin)
 
  user_routes.get('/home',auth.isLogin, userController.loadHome)
+
  user_routes.get('/logout',auth.isLogin, userController.userLogout)
 
  user_routes.get('/forget',auth.isLogout, userController.forgetLoad)
  user_routes.post('/forget',  userController.forgetVerify)
  user_routes.get('/forget-password',auth.isLogout, userController.forgetPasswordLoad)
  user_routes.post('/forget-password',  userController.resetPassword)
+ 
 
 
  user_routes.get('/verification',userController.verificationLoad)
  user_routes.post('/verification', userController.sentVerificationLink)
 
-
-
-
+ user_routes.get('/edit',auth.isLogin, userController.editProfile)
 
 
 

@@ -1,7 +1,40 @@
 <% include("./partials/header.ejs")%>
 
-<h1>Welcome on home</h1>
+<h3>Welcome, <%= user.name %></h3>
 
+
+<table width="100px" >
+    <tr>
+        <td> <img src="userImages/<%= user.image%>" width="250px" height="250px" alt="<%= user.image%> "></td>
+    </tr>
+
+    <tr>
+        <td>Email</td>
+        <td> <%= user.email%></td>
+    </tr>
+
+    <tr>
+        <td>Mobile</td>
+        <td> <%= user.mobile%></td>
+    </tr>
+     
+    <tr>
+        <td>Verified</td>
+        <td> 
+            <%
+               if(user.is_varified === 1){
+                %>
+                <p>True</p>
+                    <%
+               }
+            %>
+        </td>
+    </tr>
+
+</table>
+
+<a href="/edit?id=<%= user._id%>">Edit</a>
+<br>
 <a href="/logout">Logout</a>
 
 <% include("./partials/footer.ejs")%>
